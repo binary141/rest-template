@@ -1,0 +1,9 @@
+# Go
+tmp/
+dist/
+
+# Environment
+.env
+
+# Node
+ui/node_modules/
