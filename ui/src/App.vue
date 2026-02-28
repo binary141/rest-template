@@ -1,7 +1,7 @@
 <template>
   <div class="app">
     <header class="header">
-      <span class="app-name">example</span>
+      <RouterLink :to="{ name: 'home' }" class="app-name">example</RouterLink>
 
       <div v-if="store.loggedIn" class="user-menu" ref="menuRef">
         <button class="user-btn" aria-label="User menu" @click="open = !open">
@@ -82,6 +82,7 @@ async function handleLogout() {
   font-weight: 600;
   letter-spacing: 0.03em;
   color: #f0f0f0;
+  text-decoration: none;
 }
 
 .user-menu {
