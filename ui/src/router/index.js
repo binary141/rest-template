@@ -15,6 +15,11 @@ const router = createRouter({
       component: () => import('@/views/LoginPage.vue'),
       meta: { allowAnonymous: true },
     },
+    {
+      path: '/account',
+      name: 'account',
+      component: () => import('@/views/AccountPage.vue'),
+    },
   ],
 });
 
