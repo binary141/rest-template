@@ -15,7 +15,9 @@ import (
 //go:embed migrations/*.sql
 var migrations embed.FS
 
-func Connect() *sqlx.DB {
+var DB *sqlx.DB
+
+func Connect() error {
 	host := getEnv("POSTGRES_HOST", "db")
 	port := getEnv("POSTGRES_PORT", "5432")
 	user := getEnv("POSTGRES_USER", "dev")
@@ -27,29 +29,34 @@ func Connect() *sqlx.DB {
 		host, port, user, password, dbname,
 	)
 
-	database, err := sqlx.Connect("postgres", dsn)
+	var err error
+	DB, err = sqlx.Open("postgres", dsn)
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		return fmt.Errorf("db: open: %w", err)
+	}
+
+	if err = DB.Ping(); err != nil {
+		return fmt.Errorf("db: ping: %w", err)
 	}
 
 	log.Println("connected to database")
-	return database
+	return nil
 }
 
-func RunMigrations(database *sqlx.DB) {
-	_, err := database.Exec(`
+func RunMigrations() error {
+	_, err := DB.Exec(`
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version TEXT PRIMARY KEY,
 			applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		)
 	`)
 	if err != nil {
-		log.Fatalf("failed to create schema_migrations table: %v", err)
+		return fmt.Errorf("create schema_migrations: %w", err)
 	}
 
 	entries, err := migrations.ReadDir("migrations")
 	if err != nil {
-		log.Fatalf("failed to read migrations directory: %v", err)
+		return fmt.Errorf("read migrations dir: %w", err)
 	}
 
 	var files []string
@@ -62,9 +69,8 @@ func RunMigrations(database *sqlx.DB) {
 
 	for _, file := range files {
 		var count int
-		err := database.Get(&count, "SELECT COUNT(*) FROM schema_migrations WHERE version = $1", file)
-		if err != nil {
-			log.Fatalf("failed to check migration %s: %v", file, err)
+		if err := DB.Get(&count, "SELECT COUNT(*) FROM schema_migrations WHERE version = $1", file); err != nil {
+			return fmt.Errorf("check migration %s: %w", file, err)
 		}
 		if count > 0 {
 			continue
@@ -72,18 +78,33 @@ func RunMigrations(database *sqlx.DB) {
 
 		content, err := migrations.ReadFile("migrations/" + file)
 		if err != nil {
-			log.Fatalf("failed to read migration %s: %v", file, err)
+			return fmt.Errorf("read migration %s: %w", file, err)
 		}
 
-		tx := database.MustBegin()
-		tx.MustExec(string(content))
-		tx.MustExec("INSERT INTO schema_migrations (version) VALUES ($1)", file)
+		tx, err := DB.Beginx()
+		if err != nil {
+			return fmt.Errorf("begin tx for %s: %w", file, err)
+		}
+		if _, err := tx.Exec(string(content)); err != nil {
+			if rollErr := tx.Rollback(); rollErr != nil {
+				return fmt.Errorf("exec migration %s: %w. rollback migration: %w", file, err, rollErr)
+			}
+			return fmt.Errorf("exec migration %s: %w", file, err)
+		}
+		if _, err := tx.Exec("INSERT INTO schema_migrations (version) VALUES ($1)", file); err != nil {
+			if rollErr := tx.Rollback(); rollErr != nil {
+				return fmt.Errorf("record migration %s: %w. rollback migration: %w", file, err, rollErr)
+			}
+			return fmt.Errorf("record migration %s: %w", file, err)
+		}
 		if err := tx.Commit(); err != nil {
-			log.Fatalf("failed to apply migration %s: %v", file, err)
+			return fmt.Errorf("commit migration %s: %w", file, err)
 		}
 
 		log.Printf("applied migration: %s", file)
 	}
+
+	return nil
 }
 
 func getEnv(key, fallback string) string {
