@@ -21,6 +21,9 @@ func main() {
 	if err := db.UpsertRootUser(); err != nil {
 		log.Fatalf("failed to upsert root user: %v", err)
 	}
+	if err := db.SeedAdminRole(); err != nil {
+		log.Fatalf("failed to seed admin role: %v", err)
+	}
 
 	r := gin.Default()
 

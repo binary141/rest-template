@@ -1,4 +1,4 @@
-insert into roles (name, description, created_at, updated_at)
+insert into roles (id, name, description, created_at, updated_at)
 values
-('admin', 'admin role', now(), now()),
-('user', 'user role', now(), now())
+(1, 'admin', 'admin role', now(), now()),
+(2, 'user', 'user role', now(), now())

@@ -73,7 +73,10 @@ func UpsertRootUser() error {
 	}
 
 	_, err = DB.Exec(
-		`INSERT INTO users (email, password, can_login, is_admin, created_at, updated_at) VALUES ($1, $2, true, true, now(), now())`,
+		`INSERT INTO users 
+		(email, password, can_login, is_admin, created_at, updated_at) 
+		VALUES 
+		($1, $2, true, true, now(), now())`,
 		email, string(hashed),
 	)
 	return err

@@ -72,3 +72,20 @@ func RemoveRole(userID, roleID int64) error {
 	_, err := DB.Exec(`DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2`, userID, roleID)
 	return err
 }
+
+// SeedAdminRole ensures the "admin" role exists and is assigned to the root user.
+func SeedAdminRole() error {
+	email := getEnv("ROOT_USER_EMAIL", "admin@example.com")
+
+	var userID int64
+	if err := DB.QueryRow(`SELECT id FROM users WHERE email = $1`, email).Scan(&userID); err != nil {
+		return err
+	}
+
+	_, err := DB.Exec(`
+		INSERT INTO user_roles (user_id, role_id)
+		VALUES ($1, $2)
+		ON CONFLICT DO NOTHING
+	`, userID, 1)
+	return err
+}
