@@ -35,6 +35,20 @@ export const useUsersStore = defineStore('users', () => {
     return api({ url: 'login', method: 'POST', json: credentials });
   }
 
+  async function updateUser(fields) {
+    const response = await api({
+      url: `users/${user.value.id}`,
+      method: 'PATCH',
+      json: fields,
+    });
+    if (response.ok) {
+      const updated = { ...user.value, ...fields };
+      user.value = updated;
+      localStorage.setItem('user', JSON.stringify(updated));
+    }
+    return response;
+  }
+
   async function logOut() {
     const response = await api({ url: 'logout', method: 'POST' });
     loggedIn.value = false;
@@ -44,5 +58,5 @@ export const useUsersStore = defineStore('users', () => {
     return response;
   }
 
-  return { token, loggedIn, user, setToken, logIn, logInAPI, logOut };
+  return { token, loggedIn, user, setToken, logIn, logInAPI, logOut, updateUser };
 });
