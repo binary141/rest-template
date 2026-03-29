@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/binary141/rest-template/db"
 	"github.com/binary141/rest-template/middleware"
@@ -25,7 +26,16 @@ func main() {
 		log.Fatalf("failed to seed admin role: %v", err)
 	}
 
-	r := gin.Default()
+	prod := os.Getenv("APP_ENV") == "production"
+	if prod {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	r := gin.New()
+	r.Use(gin.Recovery())
+	if !prod {
+		r.Use(gin.Logger())
+	}
 
 	r.GET("/healthcheck", func(c *gin.Context) {
 		c.String(http.StatusOK, "RUNNING")
