@@ -9,15 +9,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
-  },
   build: {
     outDir: '../dist',
+    emptyOutDir: true,
   },
 })

@@ -19,7 +19,7 @@ CMD ["air"]
 # ── Production build ──────────────────────────────────────────────────────────
 FROM builder AS build
 
-RUN go build -o /app/server .
+RUN CGO_ENABLED=0 GOOS=linux go build -tags prod -o /app/server .
 
 FROM alpine:latest AS final
 

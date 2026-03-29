@@ -27,7 +27,7 @@ export default async function api({
 
   let response;
   try {
-    response = await fetch(`/api/${url}`, init);
+    response = await fetch(`/${url}`, init);
   } catch (e) {
     return { ok: false, status: 0, error: e };
   }

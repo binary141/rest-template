@@ -1,6 +1,8 @@
 package main
 
 import (
+	"embed"
+	"io/fs"
 	"net/http"
 	"os"
 
@@ -11,6 +13,8 @@ import (
 	"github.com/binary141/rest-template/users"
 	"github.com/gin-gonic/gin"
 )
+
+var frontendFS embed.FS
 
 func main() {
 	if err := db.Connect(); err != nil {
@@ -60,7 +64,43 @@ func main() {
 	secured.PATCH("/roles/:roleId", roles.UpdateRole)
 	secured.DELETE("/roles/:roleId", roles.DeleteRole)
 
+	if prod {
+		serveUI(r, frontendFS)
+	}
+
 	if err := r.Run(":8080"); err != nil {
 		logger.Errorf("failed to start server: %v", err)
 	}
+}
+
+func serveUI(r *gin.Engine, uiFS embed.FS) {
+	distFS, err := fs.Sub(uiFS, "dist")
+	if err != nil {
+		panic(err)
+	}
+
+	assetsFS, err := fs.Sub(distFS, "assets")
+	if err != nil {
+		panic(err)
+	}
+
+	r.StaticFS("/assets", http.FS(assetsFS))
+
+	r.GET("/favicon.svg", func(c *gin.Context) {
+		data, err := fs.ReadFile(distFS, "favicon.svg")
+		if err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.Data(http.StatusOK, "image/svg+xml", data)
+	})
+
+	r.NoRoute(func(c *gin.Context) {
+		data, err := fs.ReadFile(distFS, "index.html")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "index.html not found")
+			return
+		}
+		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
+	})
 }
