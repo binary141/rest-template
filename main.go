@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/binary141/rest-template/db"
+	"github.com/binary141/rest-template/logger"
 	"github.com/binary141/rest-template/middleware"
 	"github.com/binary141/rest-template/roles"
 	"github.com/binary141/rest-template/users"
@@ -14,16 +14,18 @@ import (
 
 func main() {
 	if err := db.Connect(); err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		logger.Errorf("db connect: %v", err)
+		return
 	}
 	if err := db.RunMigrations(); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
+		logger.Errorf("db migrations: %v", err)
+		return
 	}
 	if err := db.UpsertRootUser(); err != nil {
-		log.Fatalf("failed to upsert root user: %v", err)
+		logger.Warnf("upsert root user: %v", err)
 	}
 	if err := db.SeedAdminRole(); err != nil {
-		log.Fatalf("failed to seed admin role: %v", err)
+		logger.Warnf("seed admin role: %v", err)
 	}
 
 	prod := os.Getenv("APP_ENV") == "production"
@@ -59,6 +61,6 @@ func main() {
 	secured.DELETE("/roles/:roleId", roles.DeleteRole)
 
 	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("failed to start server: %v", err)
+		logger.Errorf("failed to start server: %v", err)
 	}
 }
