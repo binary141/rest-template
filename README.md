@@ -51,14 +51,21 @@ The UI will be available at `http://localhost:5173`. API requests to `/api/*` ar
 
 ### Default credentials
 
-A root admin account is created on first startup using the following environment variables (with defaults):
+A root admin account is seeded on first startup (see environment variables below). The root user is automatically assigned the `admin` role.
 
-| Variable            | Default              |
-|---------------------|----------------------|
-| `ROOT_USER_EMAIL`   | `admin@example.com`  |
-| `ROOT_USER_PASSWORD`| `password`           |
+## Environment variables
 
-The root user is automatically assigned the `admin` role.
+| Variable             | Default              | Description |
+|----------------------|----------------------|-------------|
+| `APP_ENV`            | `dev`                | Set to `production` to enable release mode and disable request logging |
+| `LOG_LEVEL`          | `debug`              | Log level: `debug`, `info`, `warn`, or `error` |
+| `POSTGRES_HOST`      | `db`                 | PostgreSQL host |
+| `POSTGRES_PORT`      | `5432`               | PostgreSQL port |
+| `POSTGRES_USER`      | `dev`                | PostgreSQL user |
+| `POSTGRES_PASSWORD`  | `secret`             | PostgreSQL password |
+| `POSTGRES_DB`        | `app`                | PostgreSQL database name |
+| `ROOT_USER_EMAIL`    | `admin@example.com`  | Email for the seeded root admin account |
+| `ROOT_USER_PASSWORD` | `password`           | Password for the seeded root admin account |
 
 ## API
 
